@@ -2,87 +2,99 @@ g/'\(-arch [^ ]\+ \)\+ */s//'/g
 g/=\(-arch [^ ]\+ \)\+ *'/s//='/g
 g/=\(-arch [^ ]\+ \)\+-/s//=-/g
 g/=\(-arch [^ ]\+ \)\+ \+/s//= /g
+/^$_ =/s//my $_str1 =/
 /^extras=/a
 extrasarch='@EXTRASARCH@'
-extraslib='@EXTRASPERL@'
+extraslib='@EXTRASLIB@'
 .
 /^installarchlib=/s,'.*','@UPDATESARCH@',
 /^installbin/a
 installextrasarch='@EXTRASARCH@'
-installextraslib='@EXTRASPERL@'
+installextraslib='@EXTRASLIB@'
 .
-/^installprivlib=/s,'.*','@ENV_UPDATESLIB@',
+/^installprivlib=/s,'.*','@UPDATESLIB@',
 /^installusrbinperl/i
 installupdatesarch='@UPDATESARCH@'
-installupdateslib='@ENV_UPDATESLIB@'
+installupdateslib='@UPDATESLIB@'
 .
 /^uniq=/a
 updatesarch='@UPDATESARCH@'
-updateslib='@ENV_UPDATESLIB@'
+updateslib='@UPDATESLIB@'
 .
-/^sub fetch_string/-1i
-my $archflags;
-
-my %archkeys = (
+?^local \*_ =?m/^our $byteorder =/
+i
+my $_archflags = exists($ENV{ARCHFLAGS}) ? $ENV{ARCHFLAGS} : '@ARCHFLAGS@';
+my %_archkeys = (
     archflags => 1,
     ccflags => 1,
+    ccflags_nolargefiles => 1,
     lddlflags => 1,
     ldflags => 1,
-    ccflags_nolargefiles => 1,
     ldflags_nolargefiles => 1,
 );
+my $_64bit = ((~0>>1) > 2147483647);
+my $_64bitdefine = ($_64bit ? 'define' : 'undef');
+my $_64bitsize = ($_64bit ? '8' : '4');
+my $_64bitundef = ($_64bit ? 'undef' : 'define');
+my $_i386 = ($Config::byteorder eq '1234');
+my $_ppc = ($Config::byteorder eq '4321');
 
-my $sizeref;
-
-my %size64 = (
-    ivsize => '8',
-    longsize => '8',
-    ptrsize => '8',
-    sizesize => '8',
-    uvsize => '8',
+my %_change = (
+    byteorder => $Config::byteorder,
+    castflags => ($_i386 ? '1' : '0'),
+    d_casti32 => ($_ppc ? 'define' : 'undef'),
+    d_castneg => ($_i386 ? 'undef' : 'define'),
+    d_nv_preserves_uv => $_64bitundef,
+    d_printf_format_null => $_64bitundef,
+    gidformat => ($_64bit ? '"u"' : '"lu"'),
+    i32type => ($_64bit ? 'int' : 'long'),
+    i64type => ($_64bit ? 'long' : 'long long'),
+    ivsize => $_64bitsize,
+    longsize => $_64bitsize,
+    need_va_copy => $_64bitdefine,
+    nv_preserves_uv_bits => ($_64bit ? '53' : '32'),
+    ptrsize => $_64bitsize,
+    quadkind => ($_64bit ? '2' : '3'),
+    quadtype => ($_64bit ? 'long' : 'long long'),
+    sizesize => $_64bitsize,
+    u32type => ($_64bit ? 'unsigned int' : 'unsigned long'),
+    u64type => ($_64bit ? 'unsigned long' : 'unsigned long long'),
+    uidformat => ($_64bit ? '"u"' : '"lu"'),
+    uquadtype => ($_64bit ? 'unsigned long' : 'unsigned long long'),
+    use64bitall => $_64bitdefine,
+    use64bitint => $_64bitdefine,
+    uvsize => $_64bitsize,
 );
+if(exists($ENV{RC_XBS}) && $ENV{RC_XBS} eq 'YES') {
+    $_change{installarchlib} = '@ARCHLIB@';
+    $_change{installprivlib} = '@PRIVLIB@';
+}
 
-my %size32 = (
-    ivsize => '4',
-    longsize => '4',
-    ptrsize => '4',
-    sizesize => '4',
-    uvsize => '4',
-);
-
-.
-/^sub fetch_string/+1a
-
-    if(!defined($sizeref)) {
-	# $s will be negative (begins with -) on 32-bit architectures;
-	# it will be positive (begins with a 2) on 64-bit architectures.
-	my $s = sprintf("%d", 2147483648);
-	$sizeref = ($s =~ /^-/) ? \%size32 : \%size64;
-    }
-    my $size = $sizeref->{$key};
-    return($self->{$key} = $sizeref->{$key}) if defined($size);
-
-    my $origkey = $key;
-    if(exists($ENV{RC_XBS}) && $ENV{RC_XBS} eq 'YES') {
-	$key = 'privlib' if $key eq 'installprivlib';
-	$key = 'archlib' if $key eq 'installarchlib';
-    }
-.
-/# So we can say/i
-
-    if($archkeys{$key}) {
-	if(!defined($archflags)) {
-	    $archflags = exists($ENV{ARCHFLAGS}) ? $ENV{ARCHFLAGS} : '@ARCHFLAGS@';
-	    $archflags =~ s/^\s+//;
-	    $archflags =~ s/\s+$//;
-	}
-	if($key eq 'archflags') {
-	    $value = $archflags;
-	} elsif($archflags ne '') {
-	    $value = "$archflags $value";
-	}
-    }
+sub _fix {
+    my $in = shift;
+    my($k, $v);
+    local $_;
+    ($k, $_) = split('=', $in, 2);
+    return $in unless defined($k);
+    $_archkeys{$k} && do { s/(['"])/$1$_archflags /; return join('=', $k, $_); };
+    defined($v = $_change{$k}) && do { s/(['"]).*?\1/$1$v$1/; return join('=', $k, $_); };
+    $in;
+}
 
 .
-/$self->{$key} = $value;/s/$key/$origkey/
+/^s\/(byteorder=/c
+$_ = $_part1 . "archflags='$_archflags'\n";
+.
+/^our $Config_SH_expanded =/a
+.
+.t/^EOVIRTUAL/
+s/<<.*/$_part2;/
+?^our $Config_SH_expanded =?a
+.
+.,/^EOVIRTUAL/m?^local \*_?-1
+?^our $Config_SH_expanded = .*<<?s//my $_part2 = join("\\n", map(_fix($_), split("\\n", <</
+s/;$/, -1)));/
+i
+my $_part1 = join("\n", map(_fix($_), split("\n", $_str1, -1)));
+.
 w!

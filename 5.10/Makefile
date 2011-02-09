@@ -20,7 +20,7 @@ Configure           = '$(TOPSRCROOT)/env_no_rc_trace' '$(BuildDirectory)'/Config
 Extra_Environment   = HTMLDIR='$(Install_HTML)'						\
 		      AR='$(TOPSRCROOT)/ar.sh'  DYLD_LIBRARY_PATH='$(BuildDirectory)'
 Extra_Install_Flags = HTMLDIR='$(RC_Install_HTML)' HTMLROOT='$(Install_HTML)'
-GnuAfterInstall     = zap-sitedirs link-man-page
+GnuAfterInstall     = zap-sitedirs make-extra-links
 ifeq "$(RC_XBS)" "YES"
 GnuNoBuild	    = YES
 endif
@@ -41,19 +41,21 @@ ConfigStamp2 = $(ConfigStamp)2
 configure:: $(ConfigStamp2)
 
 $(ConfigStamp2): $(ConfigStamp)
-	$(_v) sed -e 's/@PREPENDFILE@/$(PREPENDFILE)/' \
-	    -e 's/@APPENDFILE@/$(APPENDFILE)/' \
-	    -e 's,@ENV_UPDATESLIB@,$(ENV_UPDATESLIB),' \
-	    -e 's/@VERSION@/$(_VERSION)/' < '$(SRCROOT)/fix/config.h.ed' | \
-	    ed - '${BuildDirectory}/config.h'
+	$(_v) sed -e 's/@PREPENDFILE@/$(PREPENDFILE)/g' \
+	    -e 's/@APPENDFILE@/$(APPENDFILE)/g' \
+	    -e 's,@UPDATESLIB@,$(UPDATESLIB),g' \
+	    -e 's/@VERSION@/$(ENV_PERL_BASE_VERSION)/g' \
+	    '$(SRCROOT)/fix/config.h.ed' \
+	| ed - '${BuildDirectory}/config.h'
 	$(_v) ed - '${BuildDirectory}/Makefile' < '$(SRCROOT)/fix/Makefile.ed'
 	$(_v) ed - '${BuildDirectory}/GNUmakefile' < '$(SRCROOT)/fix/Makefile.ed'
 	$(_v) ed - '${BuildDirectory}/cflags' < '$(SRCROOT)/fix/cflags.ed'
-	$(_v) sed 's/@VERSION@/$(_VERSION)/g' $(SRCROOT)/fix/perlmain.c.ed | ed - ${BuildDirectory}/perlmain.c && \
+	$(_v) sed 's/@VERSION@/$(ENV_PERL_BASE_VERSION)/g' $(SRCROOT)/fix/perlmain.c.ed | ed - ${BuildDirectory}/perlmain.c
 	$(_v) $(TOUCH) $(ConfigStamp2)
 
 zap-sitedirs:
 	$(_v) $(RMDIR) '$(DSTROOT)$(NSLOCALDIR)$(NSLIBRARYSUBDIR)'
 
-link-man-page:
-	$(_v) $(LN) '$(DSTROOT)/usr/share/man/man1/perl.1' '$(DSTROOT)/usr/share/man/man1/perl$(_VERSION).1'
+make-extra-links:
+	$(_v) $(LN) '$(DSTROOT)/usr/share/man/man1/perl.1' '$(DSTROOT)/usr/share/man/man1/perl$(ENV_PERL_BASE_VERSION).1'
+	$(_v) $(LN) '$(DSTROOT)/usr/share/man/man1/perl.1' '$(DSTROOT)/usr/share/man/man1/perl$(ENV_PERL_VERSION).1'

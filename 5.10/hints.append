@@ -1,10 +1,11 @@
 #-------------------------------------------------------------------------
 # hints.append
 #-------------------------------------------------------------------------
+_v_="${perl_revision}.${perl_version}"
 prefix=/
-privlib="/System/Library/Perl/${version}"
-sitelib="/Library/Perl/${version}"
-vendorlib="/Network/Library/Perl/${version}"
+privlib="/System/Library/Perl/${_v_}"
+sitelib="/Library/Perl/${_v_}"
+vendorlib="/Network/Library/Perl/${_v_}"
 vendorprefix='/usr/local'
 man1dir="/usr/share/man/man1"
 man3dir="/usr/share/man/man3"
@@ -27,3 +28,5 @@ d_setruid='define'
 i_libutil='undef'
 optimize='-Os'
 ld=$(echo $ld | sed "s/cc/$WITH_GCC/")
+usenm='false'
+usedtrace='define'
