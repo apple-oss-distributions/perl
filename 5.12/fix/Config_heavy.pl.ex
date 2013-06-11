@@ -36,16 +36,10 @@ my $_64bit = ((~0>>1) > 2147483647);
 my $_64bitdefine = ($_64bit ? 'define' : 'undef');
 my $_64bitsize = ($_64bit ? '8' : '4');
 my $_64bitundef = ($_64bit ? 'undef' : 'define');
-my $_i386 = ($Config::byteorder eq '1234');
-my $_ppc = ($Config::byteorder eq '4321');
 
 my %_change = (
     byteorder => $Config::byteorder,
-    castflags => ($_i386 ? '1' : '0'),
-    d_casti32 => ($_ppc ? 'define' : 'undef'),
-    d_castneg => ($_i386 ? 'undef' : 'define'),
     d_nv_preserves_uv => $_64bitundef,
-    d_printf_format_null => $_64bitundef,
     gidformat => ($_64bit ? '"u"' : '"lu"'),
     i32type => ($_64bit ? 'int' : 'long'),
     i64type => ($_64bit ? 'long' : 'long long'),
