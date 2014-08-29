@@ -31,3 +31,5 @@ ld=$(echo $ld | sed "s/cc/$MY_CC/")
 usenm='false'
 usedtrace='define'
 libswanted=''
+locincpth=''
+loclibpth=''

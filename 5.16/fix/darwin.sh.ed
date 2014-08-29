@@ -1,3 +1,7 @@
+g,/usr/include/stdint\.h,s//${SDKROOT}&/
+/cppflags="${cppflags} -no-cpp-precomp"/a
+.
+?^#?,/^fi$/+1d
 /lddlflags=/a
 .
 /^\*)/s//[78].*)/
