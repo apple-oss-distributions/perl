@@ -4,7 +4,7 @@
 # tarball to create the project source directory
 ##---------------------------------------------------------------------
 PROJECT = perl
-VERSION = 5.18.2
+VERSION = 5.18.4
 COMPATVERSIONS =
 MODSUFFIX = -mod
 #TARVERSION :=
@@ -213,9 +213,17 @@ $(OBJROOT)/$(PROJECT)::
 	ed - $(PROJECT)/perl.c < fix/perl.c.ed && \
 	ed - $(PROJECT)/perlio.c < fix/perlio.c.ed && \
 	ed - $(PROJECT)/pp_sys.c < fix/pp_sys.c.ed && \
+	ed - $(PROJECT)/regcomp.c < fix/regcomp.c.ed && \
 	patch -p0 -F0 $(PROJECT)/perl.c fix/CVE-2016-2381.diff && \
+	patch -p0 -F0 $(PROJECT)/perl.c fix/deprecate.diff && \
 	patch -p0 -F0 $(PROJECT)/regcomp.c fix/CVE-2013-7422.diff && \
+	patch -p0 -F0 $(PROJECT)/regcomp.c fix/CVE-2018-6797.diff && \
+	patch -p0 -F0 $(PROJECT)/regcomp.c fix/CVE-2018-18313.diff && \
+	patch -p0 -F0 $(PROJECT)/util.c fix/CVE-2018-18311.diff && \
+	(cd $(PROJECT) ; patch -p1 -F0 < $(SRCROOT)/fix/CVE-2018-6913.diff) && \
+	(cd $(PROJECT) ; patch -p1 -F0 < $(SRCROOT)/fix/CVE-2018-12015.diff) && \
 	patch -p0 -F0 $(PROJECT)/config_h.SH fix/CORE-config.h.diff && \
+	(cd $(PROJECT) ; patch -p1 -F0 < $(SRCROOT)/fix/perl_inc.diff) && \
 	sed -e 's/@VERSION@/$(VERSION)/g' \
 	    -e 's/@VERSION_DEFAULT@/$(ENV_PERL_BASE_VERSION)/g' \
 	    -e 's/@VERSION_ALT@/$(ENV_VERSION_ALT)/g' \
