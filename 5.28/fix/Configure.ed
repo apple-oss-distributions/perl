@@ -1,4 +1,3 @@
-/^sysroot=/s/''/'${SDKROOT}'/
 /for i in $incpth/a
 .
 /if $test -f/s/$i/${SDKROOT}&/g
